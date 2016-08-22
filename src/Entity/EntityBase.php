@@ -17,9 +17,6 @@ abstract class EntityBase implements EntityInterface {
   /** @var Db */
   protected $db;
 
-  const table = NULL;
-  const idAttribute = NULL;
-
   /**
    * Entity constructor.
    *
@@ -31,14 +28,6 @@ abstract class EntityBase implements EntityInterface {
   public function __construct($data = array(), $db = NULL) {
     static::setAttrs($this, $data);
     $this->db = static::getDb($db);
-
-    if (!static::idAttribute) {
-      throw new \Exception(sprintf('No idAttribute value specified on "%s".', static::class));
-    }
-
-    if (!static::table) {
-      throw new \Exception(sprintf('No table value specified on "%s".', static::class));
-    }
   }
 
   /**
@@ -70,22 +59,30 @@ abstract class EntityBase implements EntityInterface {
   /**
    * Load the entity.
    *
+   * @param mixed $id
    * @param Db $db
-   * @param int $id
    *
    * @return static
    *
    * @throws \Exception
    */
   public static function load($id, $db = NULL) {
-    $idAttr = static::idAttribute;
-    $table = static::table;
-
-    if (self::idAttribute === NULL) {
-      throw new \Exception(sprintf('idAttribute not set for "%s".', static::class));
+    if (!is_array($id)) {
+      $id = array($id);
     }
-    $query = "SELECT * FROM {$table} WHERE {$idAttr} = ?";
-    if ($data = $db->getRow($query, array($id))) {
+
+    $table = static::table();
+
+    $query[] = "SELECT * FROM {$table}";
+    $keys = array();
+    foreach (static::keys() as $key) {
+      $keys[] = $key . ' = ?';
+      $params[] = $key;
+    }
+    $query[] = 'WHERE ' . implode(' AND ', $keys);
+
+    $query = implode(' ', $query);
+    if ($data = $db->getRow($query, $id)) {
       $entity = new static($db, $data);
       return $entity;
     }
@@ -113,5 +110,95 @@ abstract class EntityBase implements EntityInterface {
    * or updating the database record will occur.
    */
   abstract protected function store();
+
+  /**
+   * Performs an insert query.
+   */
+  protected function insert() {
+    $params = array();
+    foreach (static::insertParams() as $param) {
+      $params[$param] = $this->$param;
+    }
+
+    $cols = implode(',', array_keys($params));
+    $placeholders = implode(' , ', array_fill(0, count($params), '?'));
+    $table = static::table();
+    $query = "INSERT INTO $table ($cols) VALUES ($placeholders)";
+    $this->db->execute($query, array_values($params));
+  }
+
+  /**
+   * Performs an update query.
+   */
+  protected function update() {
+    $params = array();
+    foreach (static::updateParams() as $param) {
+      $params[$param] = $this->$param;
+    }
+
+    $table = static::table();
+    $query[] = "UPDATE $table SET";
+
+    $values = array();
+    foreach ($params as $name => $value) {
+      $values[] = $name . ' = ?';
+    }
+    $query[] = implode(',', $values);
+
+    $query[] = 'WHERE';
+    $keys = array();
+    foreach ($this->keys() as $key) {
+      $keys[] = $key . ' = ?';
+      $params[] = $key;
+    }
+    $query[] = implode(' AND ', $keys);
+
+    $query = implode(' ', $query);
+    $this->db->execute($query, $params);
+  }
+
+  /**
+   * Defines database table containing the data.
+   *
+   * @return string
+   *
+   * @throws \Exception
+   */
+  protected static function table() {
+    throw new \Exception('No keys defined.');
+  }
+
+  /**
+   * Defines the unique key for identifying the entity.
+   *
+   * @return array
+   *
+   * @throws \Exception
+   */
+  protected static function keys() {
+    throw new \Exception('No keys defined.');
+  }
+
+  /**
+   * Defines parameters used for the database insert.
+   *
+   * @return array
+   *
+   * @throws \Exception
+   */
+  protected static function insertParams() {
+    throw new \Exception('No insertParams defined.');
+  }
+
+  /**
+   * Defines parameters used for the database update.
+   *
+   * @return array
+   *
+   * @throws \Exception
+   */
+  protected static function updateParams() {
+    throw new \Exception('No updateParams defined.');
+  }
 
 }
