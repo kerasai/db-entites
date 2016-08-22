@@ -1,5 +1,5 @@
 {
-  "name": "kerasai/Db",
+  "name": "kerasai/db",
   "description": "PDO wrapper for easily managing database entities.",
   "require": {
     "php": ">=5.5.0"
