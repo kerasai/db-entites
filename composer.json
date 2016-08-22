@@ -1,7 +1,12 @@
 {
+  "name": "kerasai/Db",
+  "description": "PDO wrapper for easily managing database entities.",
+  "require": {
+    "php": ">=5.5.0"
+  },
   "autoload": {
     "psr-4": {
-      "kerasai\\Db": "src/"
+      "kerasai\\Db": "src/",
     }
   }
 }
