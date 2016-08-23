@@ -74,16 +74,16 @@ abstract class EntityBase implements EntityInterface {
     $table = static::table();
 
     $query[] = "SELECT * FROM {$table}";
-    $keys = array();
+    $keys = $params = array();
     foreach (static::keys() as $key) {
       $keys[] = $key . ' = ?';
-      $params[] = $key;
+      $params[] = array_shift($id);
     }
     $query[] = 'WHERE ' . implode(' AND ', $keys);
 
     $query = implode(' ', $query);
-    if ($data = $db->getRow($query, $id)) {
-      $entity = new static($db, $data);
+    if ($data = $db->getRow($query, $params)) {
+      $entity = new static($data, $db);
       return $entity;
     }
   }
