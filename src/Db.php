@@ -46,14 +46,14 @@ class Db {
    * @throws \Exception
    */
   public static function create($name, $config = array(), $pdo = NULL) {
-    if (!$pdo) {
-      $dsn = "{$config['driver']}:host={$config['host']};port={$config['port']};dbname={$config['dbname']}";
-      $pdo = new PDO($dsn, $config['user'], $config['password'], static::$pdoOpts);
-    }
-
     if (!isset(static::$dbs[$name])) {
-      if (empty($config)) {
-        throw new \Exception(sprintf('Configuration options not set when instantiating Db "%s".', $name));
+      if (!$pdo) {
+        if (empty($config)) {
+          throw new \Exception(sprintf('Configuration options not set when instantiating Db "%s".', $name));
+        } else {
+          $dsn = "{$config['driver']}:host={$config['host']};port={$config['port']};dbname={$config['dbname']}";
+          $pdo = new PDO($dsn, $config['user'], $config['password'], static::$pdoOpts);
+        }
       }
       static::$dbs[$name] = new static($config, $pdo);
     }
