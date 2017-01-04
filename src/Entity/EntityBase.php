@@ -141,15 +141,15 @@ abstract class EntityBase implements EntityInterface {
 
     $values = array();
     foreach ($params as $name => $value) {
-      $values[] = $name . ' = ?';
+      $values[] = $name . ' = :' . $name;
     }
-    $query[] = implode(',', $values);
+    $query[] = implode(' , ', $values);
 
     $query[] = 'WHERE';
     $keys = array();
     foreach ($this->keys() as $key) {
-      $keys[] = $key . ' = ?';
-      $params[] = $key;
+      $keys[] = $key . ' = :' . $key;
+      $params[$key] = $this->$key;
     }
     $query[] = implode(' AND ', $keys);
 
